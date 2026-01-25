@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'game',
 ]
 
@@ -67,6 +68,7 @@ TEMPLATES = [
     },
 ]
 
+ASGI_APPLICATION = 'config.asgi.application'
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
