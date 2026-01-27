@@ -7,3 +7,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         pass
+
+    async def receive(self, text_data):
+        print("Received data:", text_data)
