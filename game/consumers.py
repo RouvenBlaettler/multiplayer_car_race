@@ -75,7 +75,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def handle_accelerate(self, game):
-        self.player.position += 1
+        self.player.speed += 1
+        self.player.position += self.player.speed
         self.player.save()
 
         game.advance_turn()
@@ -83,7 +84,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def handle_brake(self, game):
-        self.player.position = max(0, self.player.position - 1)
+        self.player.speed = max(0, self.player.speed - 1)
+        self.player.position += self.player.speed
         self.player.save()
 
         game.advance_turn()
