@@ -69,7 +69,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    async def game_update(self, event):
+    async def game_state(self, event):
         await self.send_json(event['state'])
 
 
@@ -104,7 +104,7 @@ class GameConsumer(AsyncWebsocketConsumer):
     
     @database_sync_to_async
     def serialize_game(self, game):
-        players = list(game.players.all().values('id', 'user__username', 'position'))
+        players = list(game.players.all().values('id', 'user__username', 'position', 'speed', 'hp', 'nitro'))
 
                        
         return {
