@@ -12,7 +12,7 @@ class Game(models.Model):
     track_length = models.PositiveIntegerField(default=100)  # in meters
     turn_number = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    current_turn = models.OneToOneField('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='current_turn_games')
 
     def __str__(self):
         return f'Game {self.id} - Status: {self.status}'
