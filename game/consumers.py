@@ -67,7 +67,13 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.send_json({'error': 'Invalid action'})
             return
         
+        game_ended = await self.game_end_check(game)
+        
         state = await self.serialize_game(game)
+        state['game_ended'] = game_ended
+        if game_ended:
+            state['winner_id'] = game.winner_id
+        
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -104,5 +110,31 @@ class GameConsumer(AsyncWebsocketConsumer):
             'players': players,
         }
     
-    
-    
+    @database_sync_to_async
+    def game_end_check(self, game):
+        players = list(game.players.all())
+
+        # Check for position win first
+        for p in players:
+            if p.position >= 100:
+                game.status = 'finished'
+                game.winner = p
+                game.save()
+                return True
+
+        # Check for HP elimination
+        alive_players = [p for p in players if p.hp > 0]
+        if len(alive_players) == 1:
+            game.status = 'finished'
+            game.winner = alive_players[0]
+            game.save()
+            return True
+
+        return False
+
+
+
+
+
+
+

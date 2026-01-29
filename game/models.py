@@ -13,6 +13,7 @@ class Game(models.Model):
     turn_number = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     current_turn = models.OneToOneField('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='current_turn_games')
+    winner = models.ForeignKey('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='won_games')
 
     def __str__(self):
         return f'Game {self.id} - Status: {self.status}'
