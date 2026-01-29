@@ -1,6 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 from .models import Player, Game
+from .game_service import handle_accelerate, handle_brake, handle_nitro, handle_ram
 from django.shortcuts import get_object_or_404
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
@@ -51,10 +52,16 @@ class GameConsumer(AsyncWebsocketConsumer):
             return
         
         if action == 'accelerate':
-            await self.handle_accelerate(game)
+            await handle_accelerate(self.player, game)
             
         elif action == 'brake':
-            await self.handle_brake(game)
+            await handle_brake(self.player, game)
+
+        elif action == 'nitro':
+            await handle_nitro(self.player, game)
+
+        elif action == 'ram':
+            await handle_ram(self.player, game)
 
         else:
             await self.send_json({'error': 'Invalid action'})
@@ -73,23 +80,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.send_json(event['state'])
 
 
-    @database_sync_to_async
-    def handle_accelerate(self, game):
-        self.player.speed += 1
-        self.player.position += self.player.speed
-        self.player.save()
-
-        game.advance_turn()
-        game.save()
-
-    @database_sync_to_async
-    def handle_brake(self, game):
-        self.player.speed = max(0, self.player.speed - 1)
-        self.player.position += self.player.speed
-        self.player.save()
-
-        game.advance_turn()
-        game.save()
+    
 
     @database_sync_to_async
     def get_player(self, user, game_id):

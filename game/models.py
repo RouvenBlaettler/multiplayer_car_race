@@ -14,9 +14,6 @@ class Game(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     current_turn = models.OneToOneField('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='current_turn_games')
 
-    def advance_turn(self):
-        pass
-
     def __str__(self):
         return f'Game {self.id} - Status: {self.status}'
 
