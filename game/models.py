@@ -14,8 +14,25 @@ class Game(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     current_turn = models.OneToOneField('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='current_turn_games')
 
+    def advance_turn(self):
+        pass
+
     def __str__(self):
         return f'Game {self.id} - Status: {self.status}'
+
+    def advance_turn(self):
+        players = list(self.players.order_by('id'))
+        if not players:
+            self.current_turn = None
+            return
+
+        if not self.current_turn or self.current_turn not in players:
+            self.current_turn = players[0]
+            return
+
+        current_index = players.index(self.current_turn)
+        next_index = (current_index + 1) % len(players)
+        self.current_turn = players[next_index]
     
 
 class Player(models.Model):
