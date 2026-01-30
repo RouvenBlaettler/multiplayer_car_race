@@ -1,12 +1,26 @@
-{% extends "games/base.html" %}
-{% block content %}
-
-<h1>Available Games | Click to join</h1>
-{% for game in available_games %}
-<ul>
-    <li><a href = '{% url "game" game.id}'>{{ game }}</a></li>
-</ul>
-
-<h2>Create Game</h2>
-
-{% endblock %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Game Lobby</title>
+</head>
+<body>
+    <h1>Game Lobby</h1>
+    
+    <h2>Available Games</h2>
+    {% if available_games %}
+        <ul>
+        {% for game in available_games %}
+            <li>
+                Game #{{ game.id }} - Players: {{ game.players.count }}/2
+                <a href="{% url 'join_game' game.id %}">Join</a>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No games available</p>
+    {% endif %}
+    
+    <hr>
+    <a href="{% url 'create_game' %}"><button>Create New Game</button></a>
+</body>
+</html>
