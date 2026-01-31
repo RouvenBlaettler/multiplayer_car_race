@@ -15,7 +15,7 @@ def register(request):
     else:
         form = UserCreationForm()
 
-    return render(request, 'games/register.html', {'form': form})
+    return render(request, 'game/register.html', {'form': form})
         
 def login_view(request):
     if request.method == 'POST':
@@ -37,7 +37,13 @@ def logout_view(request):
     return redirect('login')
 
     
+@login_required
+def create_game(request):
+    game = Game.objects.create()
+    Player.objects.create(user=request.user, game=game)
+    return redirect('game_view', game_id=game.id)
 
+    
 
 
 @login_required

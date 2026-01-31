@@ -6,20 +6,12 @@
         {% if error %}
             <p class="text-muted">{{ error }}</p>
         {% endif %}
-        <form method = "post">
+        <form method="post">
             {% csrf_token %}
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" required>
-
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" required>
-
-            <label for="password_confirm">Confirm Password</label>
-            <input type="password" id="password_confirm" name="password_confirm" required>
-
+            {{ form.as_p }}
             <button type="submit">Register</button>
         </form>
-        <p class="inline-link">Already have an account? <a href="{url 'game/login'}">Login here</a></p>
+        <p class="inline-link">Already have an account? <a href="{% url 'login' %}">Login here</a></p>
     </div>
 </div>
     
