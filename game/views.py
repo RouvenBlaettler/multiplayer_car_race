@@ -11,7 +11,7 @@ def register(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            redirect('login')
+            return redirect('login')
     else:
         form = UserCreationForm()
 
@@ -25,7 +25,7 @@ def login_view(request):
         user = authenticate(request, username = username, password = password)
         if user:
             login(request, user)
-            return redirect('game/gamelobby.html')
+            return redirect('game_lobby')
 
         else:
             return render(request, 'game/login.html', {'error': 'incorrect password or username' })
@@ -34,7 +34,7 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
-    return redirect('game/login.html')
+    return redirect('login')
 
     
 
@@ -66,4 +66,6 @@ def join_game(request, game_id):
         game.save()
 
     return redirect('game_view', game_id=game.id)
+
+
 
