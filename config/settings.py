@@ -121,3 +121,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 LOGIN_URL = 'login'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
+}

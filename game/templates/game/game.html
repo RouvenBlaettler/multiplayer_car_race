@@ -1,33 +1,106 @@
 {% extends "game/base.html" %}
 {% block content %}
 <h1>GAME | {{player.user}}</h1>
-{% if game.current_turn.id == player.id %}
-<h2>It's your Turn</h2>
-{% else %}
-<h2>Wait for your turn</h2>
-{% endif %}
-
-
+<div id="game-data" data-game-id="{{ game.id }}" data-player-id="{{ player.id }}"></div>
 {% for p in game.players.all %}
-    {% if p == player %}
+    {% if p.id == player.id %}
     <h2>My Stats:</h2>
+    <ul>
+    <li>Hp: <span id="my-hp">{{p.hp}}</span></li>
+    <li>Position: <span id="my-position">{{p.position}}</span></li>
+    <li>Speed: <span id="my-speed">{{p.speed}}</span></li>
+    <li>Nitro: <span id="my-nitro">{{p.nitro}}</span></li>
+    </ul>
     {% else %}
     <h2>Opponent's Stats:</h2>
-    {% endif %}
     <ul>
-    <li>Hp: {{p.hp}}</li>
-    <li>Position: {{p.position}}</li>
-    <li>Speed: {{p.speed}}</li>
-    <li>Nitro: {{p.nitro}}</li>
+    <li>Hp: <span id="opp-hp">{{p.hp}}</span></li>
+    <li>Position: <span id="opp-position">{{p.position}}</span></li>
+    <li>Speed: <span id="opp-speed">{{p.speed}}</span></li>
+    <li>Nitro: <span id="opp-nitro">{{p.nitro}}</span></li>
     </ul>
+    {% endif %}
 {% endfor %}
+
+<div id="turn-status">{% if game.current_turn.id == player.id %}It's your Turn{% else %}Wait for your turn{% endif %}</div>
 
 <h2>Actions</h2>
 <ul>
     <li><button type="submit" name = "accelerate" class = "action">accelerate</button></li>
-    <li><button type="submit" name = "break" class = "action">break</button></li>
+    <li><button type="submit" name = "brake" class = "action">brake</button></li>
     <li><button type="submit" name = "ram" class = "action">ram</button></li>
     <li><button type="submit" name = "nitro" class = "action">nitro</button></li>
 </ul>
+
+
+
+<script>
+const gameData = document.getElementById('game-data');
+const gameId = parseInt(gameData.dataset.gameId, 10);
+const playerId = parseInt(gameData.dataset.playerId, 10);
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const websocket = new WebSocket(wsProtocol + '//' + window.location.host + '/ws/game/' + gameId + '/');
+
+websocket.onopen = function() {
+    console.log('WebSocket connected');
+};
+
+websocket.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    console.log('Game state:', data);
+    
+    // Update UI with new state
+    updateGameState(data);
+};
+
+websocket.onerror = function(error) {
+    console.error('WebSocket error:', error);
+};
+
+function sendAction(action) {
+    websocket.send(JSON.stringify({
+        'action': action
+    }));
+}
+
+function updateGameState(state) {
+    // Update player stats
+    state.players.forEach(p => {
+        if (p.id === playerId) {
+            document.getElementById('my-hp').textContent = p.hp;
+            document.getElementById('my-position').textContent = p.position;
+            document.getElementById('my-speed').textContent = p.speed;
+            document.getElementById('my-nitro').textContent = p.nitro;
+        } else {
+            document.getElementById('opp-hp').textContent = p.hp;
+            document.getElementById('opp-position').textContent = p.position;
+            document.getElementById('opp-speed').textContent = p.speed;
+            document.getElementById('opp-nitro').textContent = p.nitro;
+        }
+    });
+    
+    // Update turn indicator
+    const isMyTurn = state.current_turn === playerId;
+    document.getElementById('turn-status').textContent = isMyTurn ? "It's your Turn" : "Wait for your turn";
+    
+    // Disable buttons if not your turn
+    document.querySelectorAll('.action').forEach(btn => {
+        btn.disabled = !isMyTurn;
+    });
+    
+    // Check if game ended
+    if (state.game_ended) {
+        alert(state.winner_id === playerId ? 'You won!' : 'You lost!');
+    }
+}
+
+// Button click handlers
+document.querySelectorAll('.action').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const action = this.name;
+        sendAction(action);
+    });
+});
+</script>
 
 {% endblock %}
