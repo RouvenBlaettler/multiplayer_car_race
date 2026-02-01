@@ -91,6 +91,7 @@ function updateGameState(state) {
     // Check if game ended
     if (state.game_ended) {
         alert(state.winner_id === playerId ? 'You won!' : 'You lost!');
+        window.location.href = '/';  // Redirect to game lobby
     }
 }
 
