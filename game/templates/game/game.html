@@ -1,6 +1,33 @@
 {% extends "game/base.html" %}
 {% block content %}
-<h1>GAME</h1>
+<h1>GAME | {{player.user}}</h1>
+{% if game.current_turn.id == player.id %}
+<h2>It's your Turn</h2>
+{% else %}
+<h2>Wait for your turn</h2>
+{% endif %}
 
+
+{% for p in game.players.all %}
+    {% if p == player %}
+    <h2>My Stats:</h2>
+    {% else %}
+    <h2>Opponent's Stats:</h2>
+    {% endif %}
+    <ul>
+    <li>Hp: {{p.hp}}</li>
+    <li>Position: {{p.position}}</li>
+    <li>Speed: {{p.speed}}</li>
+    <li>Nitro: {{p.nitro}}</li>
+    </ul>
+{% endfor %}
+
+<h2>Actions</h2>
+<ul>
+    <li><button type="submit" name = "accelerate" class = "action">accelerate</button></li>
+    <li><button type="submit" name = "break" class = "action">break</button></li>
+    <li><button type="submit" name = "ram" class = "action">ram</button></li>
+    <li><button type="submit" name = "nitro" class = "action">nitro</button></li>
+</ul>
 
 {% endblock %}
