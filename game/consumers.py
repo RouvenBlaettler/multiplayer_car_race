@@ -52,25 +52,27 @@ class GameConsumer(AsyncWebsocketConsumer):
             return
         
         if action == 'accelerate':
-            await handle_accelerate(self.player, game)
+            crashed = await handle_accelerate(self.player, game)
             
         elif action == 'brake':
-            await handle_brake(self.player, game)
+            crashed = await handle_brake(self.player, game)
 
         elif action == 'nitro':
-            await handle_nitro(self.player, game)
+            crashed = await handle_nitro(self.player, game)
 
         elif action == 'ram':
-            await handle_ram(self.player, game)
+            crashed = await handle_ram(self.player, game)
 
         else:
             await self.send(text_data=json.dumps({'error': 'Invalid action'}))
             return
         
         game_ended = await self.game_end_check(game)
+
         
         state = await self.serialize_game(game)
         state['game_ended'] = game_ended
+        state['crashed'] = crashed
         if game_ended:
             state['winner_id'] = game.winner_id
         

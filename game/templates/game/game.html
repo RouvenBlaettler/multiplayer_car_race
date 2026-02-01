@@ -93,6 +93,10 @@ function updateGameState(state) {
         alert(state.winner_id === playerId ? 'You won!' : 'You lost!');
         window.location.href = '/';  // Redirect to game lobby
     }
+
+    if (state.crashed) {
+    alert('Your car crashed! Lost 40 HP!')
+    }
 }
 
 // Button click handlers
@@ -102,6 +106,8 @@ document.querySelectorAll('.action').forEach(btn => {
         sendAction(action);
     });
 });
+
+
 </script>
 
 {% endblock %}
