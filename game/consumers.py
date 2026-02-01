@@ -48,7 +48,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         game = await self.get_game(self.game_id)
 
         if game.current_turn_id != self.player.id:
-            await self.send_json({'error': 'Not your turn'})
+            await self.send(text_data=json.dumps({'error': 'Not your turn'}))
             return
         
         if action == 'accelerate':
@@ -64,7 +64,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             await handle_ram(self.player, game)
 
         else:
-            await self.send_json({'error': 'Invalid action'})
+            await self.send(text_data=json.dumps({'error': 'Invalid action'}))
             return
         
         game_ended = await self.game_end_check(game)
@@ -84,7 +84,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
 
     async def game_state(self, event):
-        await self.send_json(event['state'])
+        await self.send(text_data=json.dumps(event['state']))
 
 
     
