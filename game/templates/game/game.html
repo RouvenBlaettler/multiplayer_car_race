@@ -87,6 +87,10 @@ function updateGameState(state) {
     document.querySelectorAll('.action').forEach(btn => {
         btn.disabled = !isMyTurn;
     });
+
+    // Update ram button disabled state based on can_ram
+    const ramBtn = document.querySelector('button[name="ram"]');
+    ramBtn.disabled = !isMyTurn || !state.can_ram;
     
     // Check if game ended
     if (state.game_ended) {

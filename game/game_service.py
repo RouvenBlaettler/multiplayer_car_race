@@ -41,7 +41,6 @@ def handle_ram(player, game):
             if player.position <= p.position <= player.position + player.speed:
                 p.hp -= 20
                 p.save()
-
     player.position += player.speed
     crashed = crash(player)
     player.save()
@@ -55,6 +54,15 @@ def crash(player):
         player.hp -= 40
         return True
     return False
+
+@database_sync_to_async
+def can_ram(player, game):
+    for p in game.players.all():
+        if p != player:
+            if player.position <= p.position <= player.position + player.speed:
+                return True
+    return False
+
     
 
 

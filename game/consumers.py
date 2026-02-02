@@ -1,7 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 from .models import Player, Game
-from .game_service import handle_accelerate, handle_brake, handle_nitro, handle_ram
+from .game_service import handle_accelerate, handle_brake, handle_nitro, handle_ram, can_ram
 from django.shortcuts import get_object_or_404
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
@@ -28,6 +28,12 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
+        
+        # Send initial game state
+        game = await self.get_game(self.game_id)
+        state = await self.serialize_game(game)
+        state['can_ram'] = await can_ram(self.player, game)
+        await self.send(text_data=json.dumps(state))
 
 
     async def disconnect(self, close_code):
@@ -51,6 +57,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({'error': 'Not your turn'}))
             return
         
+
+        
         if action == 'accelerate':
             crashed = await handle_accelerate(self.player, game)
             
@@ -62,7 +70,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         elif action == 'ram':
             crashed = await handle_ram(self.player, game)
-
         else:
             await self.send(text_data=json.dumps({'error': 'Invalid action'}))
             return
@@ -73,6 +80,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         state = await self.serialize_game(game)
         state['game_ended'] = game_ended
         state['crashed'] = crashed
+        state['can_ram'] = await can_ram(self.player, game)
         if game_ended:
             state['winner_id'] = game.winner_id
         
