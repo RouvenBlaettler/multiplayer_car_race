@@ -17,9 +17,8 @@ def handle_accelerate(player, game):
 def handle_brake(player, game):
     player.speed = max(0, player.speed - 1)
     player.position += player.speed
-    crashed = crash(player)
     player.save()
-
+    crashed = False
     game.advance_turn()
     game.save()
     return crashed
