@@ -52,6 +52,7 @@ def crash(player):
     rand_num = random.randint(1, 100)
     if rand_num < player.speed:
         player.hp -= 40
+        player.save()
         return True
     return False
 
