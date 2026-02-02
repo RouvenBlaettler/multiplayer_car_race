@@ -39,7 +39,7 @@ def handle_nitro(player, game):
 def handle_ram(player, game):
     for p in game.players.all():
         if p != player:
-            if abs(p.position - player.position) <= 1:
+            if player.position <= p.position <= player.position + player.speed:
                 p.hp -= 20
                 p.save()
 
