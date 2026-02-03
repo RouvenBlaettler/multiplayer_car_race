@@ -85,7 +85,7 @@ function updateGameState(state) {
         window.location.href = '/';  // Redirect to game lobby
     }
 
-    if (state.crashed) {
+    if (state.crashed && isMyTurn === false) {
     alert('Your car crashed! Lost 40 HP!')
     }
 }

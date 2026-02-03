@@ -32,7 +32,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Send initial game state
         game = await self.get_game(self.game_id)
         state = await self.serialize_game(game)
-        state['can_ram'] = await can_ram(self.player, game)
+        state['can_ram'] = True
         await self.send(text_data=json.dumps(state))
 
 
@@ -82,7 +82,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         state = await self.serialize_game(game)
         state['game_ended'] = game_ended
         state['crashed'] = crashed
-        
+
         if game_ended:
             state['winner_id'] = game.winner_id
         
