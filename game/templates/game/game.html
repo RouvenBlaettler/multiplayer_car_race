@@ -3,23 +3,13 @@
 <h1>GAME | {{player.user}}</h1>
 <div id="game-data" data-game-id="{{ game.id }}" data-player-id="{{ player.id }}"></div>
 {% for p in game.players.all %}
-    {% if p.id == player.id %}
-    <h2>My Stats:</h2>
-    <ul>
-    <li>Hp: <span id="my-hp">{{p.hp}}</span></li>
-    <li>Position: <span id="my-position">{{p.position}}</span></li>
-    <li>Speed: <span id="my-speed">{{p.speed}}</span></li>
-    <li>Nitro: <span id="my-nitro">{{p.nitro}}</span></li>
+    <h2>{% if p.id == player.id %}My Stats:{% else %}Opponent's Stats:{% endif %}</h2>
+    <ul class="player-stats" data-player-id="{{ p.id }}">
+        <li>Hp: <span class="hp">{{p.hp}}</span></li>
+        <li>Position: <span class="position">{{p.position}}</span></li>
+        <li>Speed: <span class="speed">{{p.speed}}</span></li>
+        <li>Nitro: <span class="nitro">{{p.nitro}}</span></li>
     </ul>
-    {% else %}
-    <h2>Opponent's Stats:</h2>
-    <ul>
-    <li>Hp: <span id="opp-hp">{{p.hp}}</span></li>
-    <li>Position: <span id="opp-position">{{p.position}}</span></li>
-    <li>Speed: <span id="opp-speed">{{p.speed}}</span></li>
-    <li>Nitro: <span id="opp-nitro">{{p.nitro}}</span></li>
-    </ul>
-    {% endif %}
 {% endfor %}
 
 <div id="turn-status">{% if game.current_turn.id == player.id %}It's your Turn{% else %}Wait for your turn{% endif %}</div>
@@ -66,17 +56,14 @@ function sendAction(action) {
 function updateGameState(state) {
     // Update player stats
     state.players.forEach(p => {
-        if (p.id === playerId) {
-            document.getElementById('my-hp').textContent = p.hp;
-            document.getElementById('my-position').textContent = p.position;
-            document.getElementById('my-speed').textContent = p.speed;
-            document.getElementById('my-nitro').textContent = p.nitro;
-        } else {
-            document.getElementById('opp-hp').textContent = p.hp;
-            document.getElementById('opp-position').textContent = p.position;
-            document.getElementById('opp-speed').textContent = p.speed;
-            document.getElementById('opp-nitro').textContent = p.nitro;
+        const stats = document.querySelector(`.player-stats[data-player-id="${p.id}"]`);
+        if (!stats) {
+            return;
         }
+        stats.querySelector('.hp').textContent = p.hp;
+        stats.querySelector('.position').textContent = p.position;
+        stats.querySelector('.speed').textContent = p.speed;
+        stats.querySelector('.nitro').textContent = p.nitro;
     });
     
     // Update turn indicator
