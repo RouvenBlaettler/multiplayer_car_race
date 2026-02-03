@@ -51,6 +51,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         if not action:
             return
         
+        # Refresh player data to avoid stale cached values
+        self.player = await self.get_player(self.user, self.game_id)
         game = await self.get_game(self.game_id)
 
         if game.current_turn_id != self.player.id:
