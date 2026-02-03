@@ -38,7 +38,7 @@ class Player(models.Model):
     game = models.ForeignKey(Game, related_name='players', on_delete=models.CASCADE)
 
     position = models.IntegerField(default=0)  # in meters
-    speed = models.IntegerField(default=0)  # in meters per turn
+    speed = models.IntegerField(default=1)  # in meters per turn
     nitro = models.IntegerField(default=3)  # number of nitro boosts available
     hp = models.IntegerField(default=100)  # health points
 
