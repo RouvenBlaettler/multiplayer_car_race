@@ -1,7 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 from .models import Player, Game
-from .game_service import handle_accelerate, handle_brake, handle_nitro, handle_ram, can_ram
+from .game_service import handle_accelerate, handle_brake, handle_nitro, handle_ram, can_ram, danger_zones
 from django.shortcuts import get_object_or_404
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
@@ -32,7 +32,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Send initial game state
         game = await self.get_game(self.game_id)
         state = await self.serialize_game(game)
+        danger_fields = danger_zones(game)
         state['can_ram'] = True
+        state['danger_fields'] = danger_fields
         await self.send(text_data=json.dumps(state))
 
 
