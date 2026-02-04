@@ -1,32 +1,47 @@
 {% extends "game/base.html" %}
 {% block content %}
-<header>
-    <h1>GAME | {{player.user}}</h1>
-    <h3>Danger Zones on {{game.danger_fields}}</h3>
-</header>
-<aside name="right-aside">
-    <div id="game-data" data-game-id="{{ game.id }}" data-player-id="{{ player.id }}"></div>
-    {% for p in game.players.all %}
-        <h2>{% if p.id == player.id %}My Stats:{% else %}Opponent's Stats:{% endif %}</h2>
-        <ul class="player-stats" data-player-id="{{ p.id }}">
-            <li>Hp: <span class="hp">{{p.hp}}</span></li>
-            <li>Position: <span class="position">{{p.position}}</span></li>
-            <li>Speed: <span class="speed">{{p.speed}}</span></li>
-            <li>Nitro: <span class="nitro">{{p.nitro}}</span></li>
-        </ul>
-    {% endfor %}
-</aside>
-<aside name="right-aside">
-    <div id="turn-status">{% if game.current_turn.id == player.id %}It's your Turn{% else %}Wait for your turn{% endif %}</div>
+<div class="game-layout">
+    <header class="game-header">
+        <h1>GAME | {{player.user}}</h1>
+        <p class="danger-zones">Danger Zones: {{game.danger_fields}}</p>
+    </header>
 
-    <h2>Actions</h2>
-    <ul>
-        <li><button type="submit" name = "accelerate" class = "action">accelerate</button></li>
-        <li><button type="submit" name = "brake" class = "action">brake</button></li>
-        <li><button type="submit" name = "ram" class = "action">ram</button></li>
-        <li><button type="submit" name = "nitro" class = "action">nitro</button></li>
-    </ul>
-</aside>
+    <aside class="panel left-panel">
+        <div id="game-data" data-game-id="{{ game.id }}" data-player-id="{{ player.id }}"></div>
+        {% for p in game.players.all %}
+            <h2>{% if p.id == player.id %}My Stats:{% else %}Opponent's Stats:{% endif %}</h2>
+            <ul class="player-stats" data-player-id="{{ p.id }}">
+                <li>Hp: <span class="hp">{{p.hp}}</span></li>
+                <li>Position: <span class="position">{{p.position}}</span></li>
+                <li>Speed: <span class="speed">{{p.speed}}</span></li>
+                <li>Nitro: <span class="nitro">{{p.nitro}}</span></li>
+            </ul>
+        {% endfor %}
+    </aside>
+
+    <main class="track-panel">
+        <div class="track">
+            <div class="track-line"></div>
+            <div class="track-markers" id="track-markers"></div>
+            <div class="track-labels">
+                <span>Start</span>
+                <span>Finish</span>
+            </div>
+        </div>
+    </main>
+
+    <aside class="panel right-panel">
+        <div id="turn-status">{% if game.current_turn.id == player.id %}It's your Turn{% else %}Wait for your turn{% endif %}</div>
+
+        <h2>Actions</h2>
+        <ul class="action-list">
+            <li><button type="submit" name="accelerate" class="action">accelerate</button></li>
+            <li><button type="submit" name="brake" class="action">brake</button></li>
+            <li><button type="submit" name="ram" class="action">ram</button></li>
+            <li><button type="submit" name="nitro" class="action">nitro</button></li>
+        </ul>
+    </aside>
+</div>
 
 
 
@@ -36,6 +51,8 @@ const gameId = parseInt(gameData.dataset.gameId, 10);
 const playerId = parseInt(gameData.dataset.playerId, 10);
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const websocket = new WebSocket(wsProtocol + '//' + window.location.host + '/ws/game/' + gameId + '/');
+const trackMarkers = document.getElementById('track-markers');
+const trackLength = 100;
 
 websocket.onopen = function() {
     console.log('WebSocket connected');
@@ -84,6 +101,8 @@ function updateGameState(state) {
     // Update ram button disabled state based on can_ram
     const ramBtn = document.querySelector('button[name="ram"]');
     ramBtn.disabled = !isMyTurn || !state.can_ram;
+
+    updateTrack(state.players);
     
     // Check if game ended
     if (state.game_ended) {
@@ -94,6 +113,23 @@ function updateGameState(state) {
     if (state.crashed && isMyTurn === false) {
     alert('Your car crashed! Lost 40 HP!')
     }
+}
+
+function updateTrack(players) {
+    if (!trackMarkers) {
+        return;
+    }
+
+    trackMarkers.innerHTML = '';
+    players.forEach((p, index) => {
+        const marker = document.createElement('div');
+        marker.className = p.id === playerId ? 'marker me' : 'marker';
+        const clampedPos = Math.max(0, Math.min(p.position, trackLength));
+        marker.style.left = `${(clampedPos / trackLength) * 100}%`;
+        marker.style.top = `${index * 22}px`;
+        marker.title = p.user__username || `Player ${p.id}`;
+        trackMarkers.appendChild(marker);
+    });
 }
 
 // Button click handlers
