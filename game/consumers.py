@@ -7,6 +7,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 
 class GameConsumer(AsyncWebsocketConsumer):
+
     async def connect(self):
         self.game_id = self.scope['url_route']['kwargs']['game_id']
         self.user = self.scope["user"]
@@ -32,9 +33,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Send initial game state
         game = await self.get_game(self.game_id)
         state = await self.serialize_game(game)
-        danger_fields = danger_zones(game)
         state['can_ram'] = True
-        state['danger_fields'] = danger_fields
+        state['danger_fields'] = game.danger_fields
         await self.send(text_data=json.dumps(state))
 
 
@@ -61,19 +61,19 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({'error': 'Not your turn'}))
             return
         
-
+        danger_fields = game.danger_fields
         
         if action == 'accelerate':
-            crashed = await handle_accelerate(self.player, game)
+            crashed = await handle_accelerate(self.player, game, danger_fields)
             
         elif action == 'brake':
             crashed = await handle_brake(self.player, game)
 
         elif action == 'nitro':
-            crashed = await handle_nitro(self.player, game)
+            crashed = await handle_nitro(self.player, game, danger_fields)
 
         elif action == 'ram':
-            crashed = await handle_ram(self.player, game)
+            crashed = await handle_ram(self.player, game, danger_fields)
         else:
             await self.send(text_data=json.dumps({'error': 'Invalid action'}))
             return
@@ -84,6 +84,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         state = await self.serialize_game(game)
         state['game_ended'] = game_ended
         state['crashed'] = crashed
+        state['danger_fields'] = game.danger_fields
 
         if game_ended:
             state['winner_id'] = game.winner_id
@@ -101,7 +102,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         game = await self.get_game(self.game_id)
         event['state']['can_ram'] = await can_ram(self.player, game)
         await self.send(text_data=json.dumps(event['state']))
-
 
     
 

@@ -50,16 +50,18 @@ def handle_ram(player, game, danger_fields):
 
 def crash(player, danger_fields):
     rand_num = random.randint(1, 100)
-    if player.position in danger_fields:
-        if rand_num < (player.speed * 3):
-            player.hp -= 40
-            player.save()
-            return True
-    else:    
-        if rand_num < player.speed:
-            player.hp -= 40
-            player.save()
-            return True
+    for danger_field in danger_fields:
+        if player.position <= danger_field <= (player.position + player.speed):
+            if rand_num < (player.speed * 3):
+                player.hp -= 40
+                player.save()
+                return True
+    
+    if rand_num < player.speed:
+        player.hp -= 40
+        player.save()
+        return True
+    
     return False
 
 @database_sync_to_async
@@ -70,12 +72,7 @@ def can_ram(player, game):
                 return True
     return False
 
-def danger_zones(game):
-    danger_field_1 = random.randint(1, 100)
-    danger_field_2 = random.randint(1, 100)
-    danger_field_3 = random.randint(1, 100)
-    danger_fields = (danger_field_1, danger_field_2, danger_field_3)
-    return danger_fields
+
 
     
 
