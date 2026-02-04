@@ -1,6 +1,7 @@
 {% extends "game/base.html" %}
 {% block content %}
 <h1>GAME | {{player.user}}</h1>
+<h3>Danger Zones on {{game.danger_fields}}</h3>
 <div id="game-data" data-game-id="{{ game.id }}" data-player-id="{{ player.id }}"></div>
 {% for p in game.players.all %}
     <h2>{% if p.id == player.id %}My Stats:{% else %}Opponent's Stats:{% endif %}</h2>

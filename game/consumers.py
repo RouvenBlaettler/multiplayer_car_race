@@ -1,7 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 from .models import Player, Game
-from .game_service import handle_accelerate, handle_brake, handle_nitro, handle_ram, can_ram, danger_zones
+from .game_service import handle_accelerate, handle_brake, handle_nitro, handle_ram, can_ram
 from django.shortcuts import get_object_or_404
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
