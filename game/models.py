@@ -1,5 +1,10 @@
 from django.conf import settings
 from django.db import models
+import random
+
+
+def generate_danger_fields():
+    return [random.randint(1, 100) for _ in range(3)]
 
 class Game(models.Model):
     STATUS_CHOICES = [
@@ -13,6 +18,7 @@ class Game(models.Model):
     turn_number = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     current_turn = models.OneToOneField('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='current_turn_games')
+    danger_fields = models.JSONField(default=generate_danger_fields)
     winner = models.ForeignKey('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='won_games')
 
     def __str__(self):
