@@ -1,27 +1,32 @@
 {% extends "game/base.html" %}
 {% block content %}
-<h1>GAME | {{player.user}}</h1>
-<h3>Danger Zones on {{game.danger_fields}}</h3>
-<div id="game-data" data-game-id="{{ game.id }}" data-player-id="{{ player.id }}"></div>
-{% for p in game.players.all %}
-    <h2>{% if p.id == player.id %}My Stats:{% else %}Opponent's Stats:{% endif %}</h2>
-    <ul class="player-stats" data-player-id="{{ p.id }}">
-        <li>Hp: <span class="hp">{{p.hp}}</span></li>
-        <li>Position: <span class="position">{{p.position}}</span></li>
-        <li>Speed: <span class="speed">{{p.speed}}</span></li>
-        <li>Nitro: <span class="nitro">{{p.nitro}}</span></li>
+<header>
+    <h1>GAME | {{player.user}}</h1>
+    <h3>Danger Zones on {{game.danger_fields}}</h3>
+</header>
+<aside name="right-aside">
+    <div id="game-data" data-game-id="{{ game.id }}" data-player-id="{{ player.id }}"></div>
+    {% for p in game.players.all %}
+        <h2>{% if p.id == player.id %}My Stats:{% else %}Opponent's Stats:{% endif %}</h2>
+        <ul class="player-stats" data-player-id="{{ p.id }}">
+            <li>Hp: <span class="hp">{{p.hp}}</span></li>
+            <li>Position: <span class="position">{{p.position}}</span></li>
+            <li>Speed: <span class="speed">{{p.speed}}</span></li>
+            <li>Nitro: <span class="nitro">{{p.nitro}}</span></li>
+        </ul>
+    {% endfor %}
+</aside>
+<aside name="right-aside">
+    <div id="turn-status">{% if game.current_turn.id == player.id %}It's your Turn{% else %}Wait for your turn{% endif %}</div>
+
+    <h2>Actions</h2>
+    <ul>
+        <li><button type="submit" name = "accelerate" class = "action">accelerate</button></li>
+        <li><button type="submit" name = "brake" class = "action">brake</button></li>
+        <li><button type="submit" name = "ram" class = "action">ram</button></li>
+        <li><button type="submit" name = "nitro" class = "action">nitro</button></li>
     </ul>
-{% endfor %}
-
-<div id="turn-status">{% if game.current_turn.id == player.id %}It's your Turn{% else %}Wait for your turn{% endif %}</div>
-
-<h2>Actions</h2>
-<ul>
-    <li><button type="submit" name = "accelerate" class = "action">accelerate</button></li>
-    <li><button type="submit" name = "brake" class = "action">brake</button></li>
-    <li><button type="submit" name = "ram" class = "action">ram</button></li>
-    <li><button type="submit" name = "nitro" class = "action">nitro</button></li>
-</ul>
+</aside>
 
 
 
