@@ -13,7 +13,7 @@ Turn-based, two-player racing game built with Django and Channels. Each player c
 
 ## Tech Stack
 
-- Django + Django Channels
+- Django + Django Channels + Daphne
 - SQLite (dev database)
 - HTML/CSS/JavaScript
 
@@ -29,6 +29,8 @@ Example commands:
 		pip install -r requirements.txt
 		python manage.py migrate
 		python manage.py runserver
+
+If you are using a virtual environment, activate it before installing dependencies. The project uses SQLite for local development, so no separate database server is required.
 
 Open the app in your browser and create/join a game.
 
