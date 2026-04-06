@@ -15,14 +15,13 @@ from django.core.asgi import get_asgi_application
 from channels.auth import AuthMiddlewareStack
 import game.routing
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings') #tells django which settings to use(in this case cofnig/settings)
 
 application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
-    "websocket": AuthMiddlewareStack(
+    "http": get_asgi_application(),    #if http request: send to django application(django view)
+    "websocket": AuthMiddlewareStack(  #if WS: send to WS routing(channels conusmer)
         URLRouter(
             game.routing.websocket_urlpatterns
         )
     ),
 })
-
