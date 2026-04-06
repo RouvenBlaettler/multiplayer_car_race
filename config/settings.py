@@ -69,7 +69,7 @@ TEMPLATES = [
     },
 ]
 
-ASGI_APPLICATION = 'config.asgi.application'
+ASGI_APPLICATION = 'config.asgi.application'   #add this because standard wsgi application can't be used for WS
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
@@ -120,10 +120,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-LOGIN_URL = 'login'
+LOGIN_URL = 'login'  #@login_required redirects to this url if not logged in
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+CHANNEL_LAYERS = {   #message path so consumers can message each other or groups
+    "default": {    #it's name
+        "BACKEND": "channels.layers.InMemoryChannelLayer",  #inMemoryChannelLayer stores messages in RAM
     }
 }
