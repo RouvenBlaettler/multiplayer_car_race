@@ -133,7 +133,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         # Check for position win first
         for p in players:
-            if p.position >= 100:
+            if p.position >= game.track_length:
                 game.status = 'finished'
                 game.winner = p
                 game.save()

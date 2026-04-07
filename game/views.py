@@ -66,7 +66,7 @@ def join_game(request, game_id):
         Player.objects.create(user=request.user, game=game)
     game.refresh_from_db()
     players = list(game.players.all())
-    if len(players) == 2:
+    if len(players) == game.MAX_PLAYERS:
         game.status = 'active'
         game.current_turn = players[0]
         game.save()

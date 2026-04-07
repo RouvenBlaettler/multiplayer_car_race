@@ -12,6 +12,7 @@ class Game(models.Model):
         ('active', 'Active'),
         ('finished', 'Finished'),
     ]
+    MAX_PLAYERS = 2
 
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='waiting') 
     track_length = models.PositiveIntegerField(default=100)  # in meters
