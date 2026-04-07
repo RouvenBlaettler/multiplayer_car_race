@@ -20,9 +20,9 @@ from game.views import game_view, game_lobby, create_game, join_game, register, 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', game_lobby, name='game_lobby'),
+    path('', game_lobby, name='game_lobby'),      #name let's you link URLs in views/templates by name
     path('create/', create_game, name='create_game'),
-    path('join/<int:game_id>/', join_game, name='join_game'),
+    path('join/<int:game_id>/', join_game, name='join_game'),   #game_id int gets automatically passed into function
     path('game/<int:game_id>/', game_view, name='game_view'),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
