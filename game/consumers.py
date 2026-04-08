@@ -57,6 +57,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.player = await self.get_player(self.user, self.game_id)
         game = await self.get_game(self.game_id)
 
+        if game.status == 'finished':
+            await self.send(text_data=json.dumps({'error': 'Game is finished'}))
+            return
+
         if game.current_turn_id != self.player.id:
             await self.send(text_data=json.dumps({'error': 'Not your turn'}))
             return
