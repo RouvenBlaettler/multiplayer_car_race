@@ -18,9 +18,9 @@ class Game(models.Model):
     track_length = models.PositiveIntegerField(default=100)  # in meters
     turn_number = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
-    current_turn = models.OneToOneField('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='current_turn_games')
+    current_turn = models.ForeignKey('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='current_turn_games')
     danger_fields = models.JSONField(default=generate_danger_fields)
-    winner = models.ForeignKey('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='won_games')
+    winner = models.ForeignKey('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='won_games')   #null=true means null values are allowed, blank=true means admin can leave field blank
 
     def __str__(self):
         return f'Game {self.id} - Status: {self.status}'
