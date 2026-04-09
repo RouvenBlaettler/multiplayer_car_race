@@ -5,6 +5,7 @@ from .game_service import handle_accelerate, handle_brake, handle_nitro, handle_
 from django.shortcuts import get_object_or_404
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
+import datetime
 
 class GameConsumer(AsyncWebsocketConsumer):
 
@@ -20,6 +21,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         if not self.player:
             await self.close()
             return
+        
+        self.player.is_online = True
+        self.player.last_seen = datetime.datetime.now()
+        self.player.disconnected_at = None
 
         self.room_group_name = f'game_{self.game_id}'
 
@@ -39,10 +44,15 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 
     async def disconnect(self, close_code):
+        self.player.is_online = False
+        self.player.last_seen = datetime.datetime.now()
+        self.player.disconnected_at = datetime.datetime.now()
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
+
+
 
 
 
@@ -63,6 +73,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         if game.current_turn_id != self.player.id:
             await self.send(text_data=json.dumps({'error': 'Not your turn'}))
+            return
+        
+        game.turn_deadline = datetime.datetime.now() + datetime.timedelta(seconds=game.TURN_TIMEOUT_SECONDS)
+
+        now = datetime.datetime.now()
+
+        if now > game.turn_deadline:
+            game.advance_turn()
             return
         
         danger_fields = game.danger_fields
@@ -152,10 +170,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             return True
 
         return False
-
-
-
-
 
 
 

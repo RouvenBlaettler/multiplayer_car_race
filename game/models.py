@@ -13,6 +13,7 @@ class Game(models.Model):
         ('finished', 'Finished'),
     ]
     MAX_PLAYERS = 2
+    TURN_TIMEOUT_SECONDS = 20
 
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='waiting') 
     track_length = models.PositiveIntegerField(default=100)  # in meters
@@ -21,6 +22,8 @@ class Game(models.Model):
     current_turn = models.ForeignKey('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='current_turn_games')
     danger_fields = models.JSONField(default=generate_danger_fields)
     winner = models.ForeignKey('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='won_games')   #null=true means null values are allowed, blank=true means admin can leave field blank
+
+    turn_deadline = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f'Game {self.id} - Status: {self.status}'
@@ -48,6 +51,10 @@ class Player(models.Model):
     speed = models.IntegerField(default=1)  # in meters per turn
     nitro = models.IntegerField(default=3)  # number of nitro boosts available
     hp = models.IntegerField(default=100)  # health points
+
+    is_online = models.BooleanField(default=False)
+    last_seen = models.DateTimeField(null=True, blank=True)
+    disconnected_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f'{self.user} in Game {self.game.id}'
