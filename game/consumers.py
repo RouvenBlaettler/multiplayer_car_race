@@ -5,6 +5,7 @@ from .game_service import handle_accelerate, handle_brake, handle_nitro, handle_
 from django.shortcuts import get_object_or_404
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
+from django.utils import timezone
 import datetime
 
 class GameConsumer(AsyncWebsocketConsumer):
@@ -21,10 +22,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         if not self.player:
             await self.close()
             return
-        
-        self.player.is_online = True
-        self.player.last_seen = datetime.datetime.now()
-        self.player.disconnected_at = None
+
+        await self.mark_player_connected(self.player)
 
         self.room_group_name = f'game_{self.game_id}'
 
@@ -44,9 +43,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 
     async def disconnect(self, close_code):
-        self.player.is_online = False
-        self.player.last_seen = datetime.datetime.now()
-        self.player.disconnected_at = datetime.datetime.now()
+        await self.mark_player_disconnected(self.player)
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
@@ -74,14 +71,18 @@ class GameConsumer(AsyncWebsocketConsumer):
         if game.current_turn_id != self.player.id:
             await self.send(text_data=json.dumps({'error': 'Not your turn'}))
             return
-        
-        game.turn_deadline = datetime.datetime.now() + datetime.timedelta(seconds=game.TURN_TIMEOUT_SECONDS)
 
-        now = datetime.datetime.now()
+        now = timezone.now()
 
-        if now > game.turn_deadline:
+        if game.turn_deadline and now > game.turn_deadline:
             game.advance_turn()
+            game.turn_deadline = now + datetime.timedelta(seconds=game.TURN_TIMEOUT_SECONDS)
+            await self.save_game(game)
+            await self.send(text_data=json.dumps({'error': 'Turn timed out'}))
             return
+
+        game.turn_deadline = now + datetime.timedelta(seconds=game.TURN_TIMEOUT_SECONDS)
+        await self.save_game(game)
         
         danger_fields = game.danger_fields
         
@@ -137,6 +138,25 @@ class GameConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_game(self, game_id):
         return get_object_or_404(Game, id=game_id)
+
+    @database_sync_to_async
+    def mark_player_connected(self, player):
+        player.is_online = True
+        player.last_seen = timezone.now()
+        player.disconnected_at = None
+        player.save(update_fields=['is_online', 'last_seen', 'disconnected_at'])
+
+    @database_sync_to_async
+    def mark_player_disconnected(self, player):
+        now = timezone.now()
+        player.is_online = False
+        player.last_seen = now
+        player.disconnected_at = now
+        player.save(update_fields=['is_online', 'last_seen', 'disconnected_at'])
+
+    @database_sync_to_async
+    def save_game(self, game):
+        game.save()
     
     @database_sync_to_async
     def serialize_game(self, game):
