@@ -144,7 +144,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         player.is_online = True
         player.last_seen = timezone.now()
         player.disconnected_at = None
-        player.save(update_fields=['is_online', 'last_seen', 'disconnected_at'])
+        player.save()
 
     @database_sync_to_async
     def mark_player_disconnected(self, player):
@@ -152,9 +152,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         player.is_online = False
         player.last_seen = now
         player.disconnected_at = now
-        player.save(update_fields=['is_online', 'last_seen', 'disconnected_at'])
+        player.save()
 
-    @database_sync_to_async
+    @database_sync_to_async    #becasue of the wrapper the DB task get's sent to worker thread instead of main loop thread
     def save_game(self, game):
         game.save()
     
