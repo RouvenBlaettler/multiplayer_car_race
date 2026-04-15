@@ -2,7 +2,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 from .models import Player, Game
 from .game_service import handle_accelerate, handle_brake, handle_nitro, handle_ram, can_ram
-from django.shortcuts import get_object_or_404
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from django.utils import timezone
@@ -11,11 +10,12 @@ import datetime
 class GameConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
+        #ASGI server accepts WS and creates scope dic with data about connection
         self.game_id = self.scope['url_route']['kwargs']['game_id']
         self.user = self.scope["user"]
 
         if isinstance(self.user, AnonymousUser):
-            await self.close()
+            await self.close()    #terminate WS connection
             return
         
         self.player = await self.get_player(self.user, self.game_id)
@@ -32,17 +32,21 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-        await self.accept()
+        await self.accept()   #accept WS connection
         
         # Send initial game state
         game = await self.get_game(self.game_id)
+        if not game:
+            await self.close()
+            return
+
         state = await self.serialize_game(game)
         state['can_ram'] = await can_ram(self.player, game)
         state['danger_fields'] = game.danger_fields
         await self.send(text_data=json.dumps(state))
 
 
-    async def disconnect(self, close_code):
+    async def disconnect(self, close_code):   #close_code = code explaining why WS closed
         await self.mark_player_disconnected(self.player)
         await self.channel_layer.group_discard(
             self.room_group_name,
@@ -62,7 +66,14 @@ class GameConsumer(AsyncWebsocketConsumer):
         
         # Refresh player data to avoid stale cached values
         self.player = await self.get_player(self.user, self.game_id)
+        if not self.player:
+            await self.close()
+            return
+
         game = await self.get_game(self.game_id)
+        if not game:
+            await self.close()
+            return
 
         if game.status == 'finished':
             await self.send(text_data=json.dumps({'error': 'Game is finished'}))
@@ -123,6 +134,10 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def game_state(self, event):
         game = await self.get_game(self.game_id)
+        if not game:
+            await self.close()
+            return
+
         event['state']['can_ram'] = await can_ram(self.player, game)
         await self.send(text_data=json.dumps(event['state']))
 
@@ -137,7 +152,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         
     @database_sync_to_async
     def get_game(self, game_id):
-        return get_object_or_404(Game, id=game_id)
+        try:
+            #get game model field named id where it is equal to funcarg game_id(e.g 7)
+            return Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            return None
 
     @database_sync_to_async
     def mark_player_connected(self, player):
