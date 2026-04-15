@@ -47,11 +47,18 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 
     async def disconnect(self, close_code):   #close_code = code explaining why WS closed
-        await self.mark_player_disconnected(self.player)
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
+        try:     #check if player and group were even created before disconnecting
+            if self.player:
+                await self.mark_player_disconnected(self.player)
+        except AttributeError:
+            pass
+        try:
+            await self.channel_layer.group_discard(
+                self.room_group_name,
+                self.channel_name
+            )
+        except AttributeError:
+            pass
 
 
 
@@ -75,14 +82,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
 
-        if game.status == 'finished':
-            await self.send(text_data=json.dumps({'error': 'Game is finished'}))
-            return
-
-        if game.current_turn_id != self.player.id:
-            await self.send(text_data=json.dumps({'error': 'Not your turn'}))
-            return
-
         now = timezone.now()
 
         if game.turn_deadline and now > game.turn_deadline:
@@ -94,6 +93,15 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         game.turn_deadline = now + datetime.timedelta(seconds=game.TURN_TIMEOUT_SECONDS)
         await self.save_game(game)
+
+        if game.status == 'finished':
+            await self.send(text_data=json.dumps({'error': 'Game is finished'}))
+            return
+
+        if game.current_turn_id != self.player.id:
+            await self.send(text_data=json.dumps({'error': 'Not your turn'}))
+            return
+
         
         danger_fields = game.danger_fields
         
