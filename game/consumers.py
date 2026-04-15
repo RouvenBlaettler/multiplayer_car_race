@@ -88,11 +88,17 @@ class GameConsumer(AsyncWebsocketConsumer):
             game.advance_turn()
             game.turn_deadline = now + datetime.timedelta(seconds=game.TURN_TIMEOUT_SECONDS)
             await self.save_game(game)
-            await self.send(text_data=json.dumps({'error': 'Turn timed out'}))
+            # Broadcast updated game state to all players
+            state = await self.serialize_game(game)
+            state['timeout'] = True
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'game_state',
+                    'state': state
+                }
+            )
             return
-
-        game.turn_deadline = now + datetime.timedelta(seconds=game.TURN_TIMEOUT_SECONDS)
-        await self.save_game(game)
 
         if game.status == 'finished':
             await self.send(text_data=json.dumps({'error': 'Game is finished'}))
@@ -101,10 +107,12 @@ class GameConsumer(AsyncWebsocketConsumer):
         if game.current_turn_id != self.player.id:
             await self.send(text_data=json.dumps({'error': 'Not your turn'}))
             return
-
+        
+        game.turn_deadline = now + datetime.timedelta(seconds=game.TURN_TIMEOUT_SECONDS)
+        await self.save_game(game)
         
         danger_fields = game.danger_fields
-        
+
         if action == 'accelerate':
             crashed = await handle_accelerate(self.player, game, danger_fields)
             
