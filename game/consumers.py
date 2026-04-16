@@ -15,7 +15,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.user = self.scope["user"]
 
         if isinstance(self.user, AnonymousUser):
-            await self.close()    #terminate WS connection
+            #terminate WS connection
+            await self.close()   #await means until DB is ready server can start processing other consumers
             return
         
         self.player = await self.get_player(self.user, self.game_id)
@@ -27,9 +28,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         self.room_group_name = f'game_{self.game_id}'
 
-        await self.channel_layer.group_add(
+        await self.channel_layer.group_add(  #channel layer is the messaging system behind WS consumer
             self.room_group_name,
-            self.channel_name
+            self.channel_name   #name/ID of specific WS connection
         )
 
         await self.accept()   #accept WS connection
@@ -47,6 +48,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 
     async def disconnect(self, close_code):   #close_code = code explaining why WS closed
+        game = await self.get_game(self.game_id)
+        if game.current_turn_id == self.player.id:
+            game.advance_turn()
         try:     #check if player and group were even created before disconnecting
             if self.player:
                 await self.mark_player_disconnected(self.player)
