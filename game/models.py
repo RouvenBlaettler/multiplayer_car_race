@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 import random
+from django.utils import timezone
+import datetime
 
 
 def generate_danger_fields():
@@ -22,7 +24,6 @@ class Game(models.Model):
     current_turn = models.ForeignKey('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='current_turn_games')
     danger_fields = models.JSONField(default=generate_danger_fields)
     winner = models.ForeignKey('Player', null=True, blank=True, on_delete=models.SET_NULL, related_name='won_games')   #null=true means null values are allowed, blank=true means admin can leave field blank
-
     turn_deadline = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
@@ -30,17 +31,23 @@ class Game(models.Model):
 
     def advance_turn(self):
         players = list(self.players.order_by('id'))
+        now = timezone.now()
         if not players:
             self.current_turn = None
+            self.save()
             return
 
         if not self.current_turn or self.current_turn not in players:
             self.current_turn = players[0]
+            self.turn_deadline = now + datetime.timedelta(seconds=self.TURN_TIMEOUT_SECONDS)
+            self.save()
             return
 
         current_index = players.index(self.current_turn)
         next_index = (current_index + 1) % len(players)
         self.current_turn = players[next_index]
+        self.turn_deadline = now + datetime.timedelta(seconds=self.TURN_TIMEOUT_SECONDS)
+        self.save()
     
 
 class Player(models.Model):

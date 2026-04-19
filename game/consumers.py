@@ -50,7 +50,7 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):   #close_code = code explaining why WS closed
         game = await self.get_game(self.game_id)
         if game.current_turn_id == self.player.id:
-            game.advance_turn()
+            await self.call_advance_turn(game)
         try:     #check if player and group were even created before disconnecting
             if self.player:
                 await self.mark_player_disconnected(self.player)
@@ -89,9 +89,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         now = timezone.now()
 
         if game.turn_deadline and now > game.turn_deadline:
-            game.advance_turn()
-            game.turn_deadline = now + datetime.timedelta(seconds=game.TURN_TIMEOUT_SECONDS)
-            await self.save_game(game)
+            await self.call_advance_turn(game)
             # Broadcast updated game state to all players
             state = await self.serialize_game(game)
             state['timeout'] = True
@@ -111,9 +109,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         if game.current_turn_id != self.player.id:
             await self.send(text_data=json.dumps({'error': 'Not your turn'}))
             return
-        
-        game.turn_deadline = now + datetime.timedelta(seconds=game.TURN_TIMEOUT_SECONDS)
-        await self.save_game(game)
         
         danger_fields = game.danger_fields
 
@@ -229,6 +224,10 @@ class GameConsumer(AsyncWebsocketConsumer):
             return True
 
         return False
+    
+    @database_sync_to_async
+    def call_advance_turn(self, game):
+        game.advance_turn()
 
 
 
