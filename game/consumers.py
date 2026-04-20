@@ -23,7 +23,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         if not self.player:
             await self.close()
             return
+        
+        now = timezone.now()
 
+        if self.player.disconnected_at < now + datetime.timedelta(seconds=self.game.TURN_TIMEOUT_SECONDS):
+            pass
         await self.mark_player_connected(self.player)
 
         self.room_group_name = f'game_{self.game_id}'
