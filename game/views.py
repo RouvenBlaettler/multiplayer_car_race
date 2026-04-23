@@ -49,7 +49,11 @@ def create_game(request):
 @login_required
 def game_lobby(request):
     available_games = Game.objects.filter(status="waiting")
-    context = {"available_games": available_games}
+    active_games = Game.objects.filter(status="active", players__user=request.user).distinct()
+    context = {
+        "available_games": available_games,
+        "active_games": active_games,
+    }
     return render(request, "game/gamelobby.html", context)
 
 @login_required

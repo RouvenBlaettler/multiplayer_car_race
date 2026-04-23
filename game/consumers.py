@@ -23,11 +23,20 @@ class GameConsumer(AsyncWebsocketConsumer):
         if not self.player:
             await self.close()
             return
+
+        game = await self.get_game(self.game_id)
+        if not game:
+            await self.close()
+            return
         
         now = timezone.now()
 
-        if self.player.disconnected_at < now + datetime.timedelta(seconds=self.game.TURN_TIMEOUT_SECONDS):
-            pass
+        # Reconnect grace: player disconnected less than 30s ago.
+        if self.player.disconnected_at and (now - self.player.disconnected_at) <= datetime.timedelta(seconds=30):
+            if game.status == 'active' and game.current_turn_id == self.player.id:
+                game.turn_deadline = now + datetime.timedelta(seconds=30)
+                await self.save_game(game)
+
         await self.mark_player_connected(self.player)
 
         self.room_group_name = f'game_{self.game_id}'
@@ -40,15 +49,16 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.accept()   #accept WS connection
         
         # Send initial game state
-        game = await self.get_game(self.game_id)
-        if not game:
-            await self.close()
-            return
-
         state = await self.serialize_game(game)
         state['can_ram'] = await can_ram(self.player, game)
         state['danger_fields'] = game.danger_fields
-        await self.send(text_data=json.dumps(state))
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'game_state',
+                'state': state
+            }
+        )
 
 
     async def disconnect(self, close_code):   #close_code = code explaining why WS closed

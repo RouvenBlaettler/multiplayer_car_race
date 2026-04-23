@@ -37,6 +37,29 @@
             {% endif %}
         </section>
 
+        <section class="lobby-panel">
+            <div class="panel-header">
+                <h2>My Active Games</h2>
+            </div>
+
+            {% if active_games %}
+                <ul class="game-list">
+                {% for game in active_games %}
+                    <li class="game-card">
+                        <div>
+                            <h3>Game #{{ game.id }}</h3>
+                            <p>Status: {{ game.status }}</p>
+                            <p>Players: {{ game.players.count }}/2</p>
+                        </div>
+                        <a class="secondary-btn" href="{% url 'game_view' game.id %}">Rejoin</a>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-state">You are not in any active games right now.</p>
+            {% endif %}
+        </section>
+
         <footer class="lobby-footer">
             <a class="ghost-btn" href="{% url 'logout' %}">Logout</a>
         </footer>
