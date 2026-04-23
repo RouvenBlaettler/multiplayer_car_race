@@ -62,9 +62,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 
     async def disconnect(self, close_code):   #close_code = code explaining why WS closed
-        game = await self.get_game(self.game_id)
-        if game.current_turn_id == self.player.id:
-            await self.call_advance_turn(game)
         try:     #check if player and group were even created before disconnecting
             if self.player:
                 await self.mark_player_disconnected(self.player)

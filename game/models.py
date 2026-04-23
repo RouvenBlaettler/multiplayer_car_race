@@ -30,7 +30,7 @@ class Game(models.Model):
         return f'Game {self.id} - Status: {self.status}'
 
     def advance_turn(self):
-        players = list(self.players.order_by('id'))
+        players = list(self.players.filter(is_online = True).order_by('id'))
         now = timezone.now()
         if not players:
             self.current_turn = None
