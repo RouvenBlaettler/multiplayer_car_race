@@ -1,144 +1,217 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 :root {
-    --bg: #0b0f1a;
-    --panel: #141b2d;
-    --panel-border: #1f2942;
-    --text: #e6e9f2;
-    --muted: #9aa3b2;
-    --accent: #6ee7ff;
-    --accent-2: #7c5cff;
+    --bg: #0b0716;
+    --bg-panel: #150d2b;
+    --bg-card: #1d1438;
+    --border: #3b2a6b;
+    --text: #e8e3ff;
+    --muted: #8a80b8;
+    --me: #22f3ff;
+    --opp: #ff3ea5;
+    --hazard: #ffcc00;
+    --good: #39ff88;
+    --pixel: 'Press Start 2P', monospace;
+    --mono: 'VT323', monospace;
 }
 
 body {
-    margin: 0;
-    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
-    background: radial-gradient(1200px 800px at 50% -20%, #1a2140, var(--bg));
-    color: var(--text);
     min-height: 100vh;
+    background:
+        radial-gradient(ellipse at top, #2a1458 0%, transparent 60%),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px),
+        var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 24px;
 }
 
 .lobby-layout {
-    max-width: 900px;
+    max-width: 1100px;
+    min-height: 100vh;
+    align-content: center;
     margin: 0 auto;
-    padding: 32px 20px 48px;
+    padding: 40px 24px;
     display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+        "header header"
+        "open   active"
+        "footer footer";
     gap: 24px;
 }
 
+.lobby-layout > .lobby-panel:nth-of-type(1) { grid-area: open; }
+.lobby-layout > .lobby-panel:nth-of-type(2) { grid-area: active; }
+
+/* ---------- Header ---------- */
+
 .lobby-header {
+    grid-area: header;
     text-align: center;
-    padding: 20px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, rgba(124, 92, 255, 0.3), rgba(110, 231, 255, 0.2));
-    border: 1px solid rgba(124, 92, 255, 0.35);
+    margin-bottom: 12px;
 }
 
 .lobby-header h1 {
-    margin: 0;
-    font-size: 30px;
+    font-family: var(--pixel);
+    font-size: 40px;
     letter-spacing: 2px;
+    color: var(--hazard);
+    text-shadow: 0 0 10px rgba(255, 204, 0, 0.7), 4px 4px 0 #a3168a;
 }
 
 .lobby-header p {
-    margin: 8px 0 0;
+    margin-top: 16px;
     color: var(--muted);
 }
 
+/* ---------- Panels ---------- */
+
 .lobby-panel {
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-    border-radius: 18px;
-    padding: 20px;
-    box-shadow: 0 10px 30px rgba(6, 10, 20, 0.4);
+    background: var(--bg-panel);
+    border: 3px solid var(--border);
+    box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.5);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    min-height: 340px;
 }
 
 .panel-header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    align-items: center;
     flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 20px;
 }
+
+.panel-header h2 {
+    font-family: var(--pixel);
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: var(--me);
+}
+
+.lobby-layout > .lobby-panel:nth-of-type(2) .panel-header h2 { color: var(--opp); }
+
+/* ---------- Game cards ---------- */
 
 .game-list {
     list-style: none;
-    padding: 0;
-    margin: 18px 0 0;
     display: grid;
-    gap: 14px;
+    gap: 12px;
 }
 
 .game-card {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    padding: 16px 18px;
-    border-radius: 14px;
-    border: 1px solid rgba(110, 231, 255, 0.15);
-    background: rgba(110, 231, 255, 0.06);
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 3px solid #000;
+    box-shadow: 4px 4px 0 #000;
 }
 
 .game-card h3 {
-    margin: 0 0 6px;
+    font-family: var(--pixel);
+    font-size: 13px;
+    margin-bottom: 8px;
 }
 
 .game-card p {
-    margin: 0;
     color: var(--muted);
+    line-height: 1.1;
 }
 
 .empty-state {
-    margin: 18px 0 0;
+    flex: 1;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 24px;
     color: var(--muted);
+    border: 3px dashed var(--border);
 }
+
+/* ---------- Buttons ---------- */
 
 .primary-btn,
 .secondary-btn,
 .ghost-btn {
+    display: inline-block;
+    font-family: var(--pixel);
+    font-size: 11px;
+    text-transform: uppercase;
     text-decoration: none;
-    color: var(--text);
-    font-weight: 600;
-    padding: 10px 16px;
-    border-radius: 10px;
-    border: 1px solid rgba(110, 231, 255, 0.4);
-    background: rgba(110, 231, 255, 0.12);
-    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    border: 3px solid #000;
+    box-shadow: 4px 4px 0 #000;
+    transition: transform 0.05s;
+    white-space: nowrap;
+}
+
+.primary-btn {
+    padding: 12px 14px;
+    color: #000;
+    background: var(--hazard);
 }
 
 .secondary-btn {
-    border-color: rgba(124, 92, 255, 0.5);
-    background: rgba(124, 92, 255, 0.12);
+    padding: 10px 14px;
+    color: #000;
+    background: var(--good);
 }
 
 .ghost-btn {
-    border-color: rgba(154, 163, 178, 0.3);
+    padding: 10px 14px;
+    color: var(--muted);
     background: transparent;
+    border-color: var(--border);
+    box-shadow: none;
 }
 
 .primary-btn:hover,
-.secondary-btn:hover,
+.secondary-btn:hover { filter: brightness(1.15); }
+
 .ghost-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(110, 231, 255, 0.2);
+    color: var(--text);
+    border-color: var(--muted);
 }
+
+.primary-btn:active,
+.secondary-btn:active {
+    transform: translate(4px, 4px);
+    box-shadow: none;
+}
+
+/* ---------- Footer ---------- */
 
 .lobby-footer {
+    grid-area: footer;
     display: flex;
     justify-content: center;
+    margin-top: 8px;
 }
 
-@media (max-width: 720px) {
-    .panel-header {
-        flex-direction: column;
-        align-items: flex-start;
+/* ---------- Responsive ---------- */
+
+@media (max-width: 760px) {
+    .lobby-layout {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "header"
+            "open"
+            "active"
+            "footer";
     }
 
-    .game-card {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
+    .lobby-header h1 { font-size: 26px; }
+    .lobby-panel { min-height: 0; }
 }

@@ -2,145 +2,202 @@
 {% block content %}
 <div class="game-layout">
     <header class="game-header">
-        <h1>GAME | {{player.user}}</h1>
-        <p class="danger-zones">Danger Zones: {{game.danger_fields}}</p>
+        <h1>CAR RACE</h1>
+        <p class="subtitle">{{ player.user }} · Game #{{ game.id }}</p>
     </header>
 
     <aside class="panel left-panel">
-        <div id="game-data" data-game-id="{{ game.id }}" data-player-id="{{ player.id }}"></div>
+        <div id="game-data" data-game-id="{{ game.id }}" data-player-id="{{ player.id }}" data-track-length="{{ game.track_length }}"></div>
         {% for p in game.players.all %}
-            <h2>{% if p.id == player.id %}My Stats:{% else %}Opponent's Stats:{% endif %}</h2>
-            <ul class="player-stats" data-player-id="{{ p.id }}">
-                <li>Hp: <span class="hp">{{p.hp}}</span></li>
-                <li>Position: <span class="position">{{p.position}}</span></li>
-                <li>Speed: <span class="speed">{{p.speed}}</span></li>
-                <li>Nitro: <span class="nitro">{{p.nitro}}</span></li>
-            </ul>
+            <div class="player-card {% if p.id == player.id %}me{% else %}opp{% endif %}">
+                <h2>{% if p.id == player.id %}YOU{% else %}{{ p.user|upper }}{% endif %}</h2>
+                <ul class="player-stats" data-player-id="{{ p.id }}">
+                    <li><span class="label">HP</span><span><span class="hp">{{ p.hp }}</span>/100</span></li>
+                    <li class="hp-bar"><div class="hp-fill"></div></li>
+                    <li><span class="label">Position</span><span><span class="position">{{ p.position }}</span> m</span></li>
+                    <li><span class="label">Speed</span><span><span class="speed">{{ p.speed }}</span> m/turn</span></li>
+                    <li><span class="label">Nitro</span><span class="nitro-pips"></span><span class="nitro" hidden>{{ p.nitro }}</span></li>
+                </ul>
+            </div>
         {% endfor %}
     </aside>
 
     <main class="track-panel">
-        <div class="track">
-            <div class="track-line"></div>
+        <div class="track" id="track">
             <div class="track-markers" id="track-markers"></div>
-            <div class="track-labels">
-                <span>Start</span>
-                <span>Finish</span>
-            </div>
+        </div>
+        <div class="track-labels">
+            <span>START</span>
+            <span>FINISH · {{ game.track_length }} m</span>
+        </div>
+        <div class="legend">
+            <span class="l-me">You</span>
+            <span class="l-opp">Opponent</span>
+            <span class="l-danger">Danger zone (crash risk)</span>
         </div>
     </main>
 
     <aside class="panel right-panel">
-        <div id="turn-status">{% if game.current_turn.id == player.id %}It's your Turn{% else %}Wait for your turn{% endif %}</div>
+        <div id="turn-status" {% if game.current_turn.id == player.id %}class="my-turn"{% endif %}>
+            {% if game.current_turn.id == player.id %}YOUR TURN!{% else %}WAITING FOR OPPONENT…{% endif %}
+        </div>
 
-        <h2>Actions</h2>
+        <h2>ACTIONS</h2>
         <ul class="action-list">
-            <li><button type="submit" name="accelerate" class="action">accelerate</button></li>
-            <li><button type="submit" name="brake" class="action">brake</button></li>
-            <li><button type="submit" name="ram" class="action">ram</button></li>
-            <li><button type="submit" name="nitro" class="action">nitro</button></li>
+            <li><button type="button" name="accelerate" class="action">Accelerate<span class="action-hint">+1 speed, then move</span></button></li>
+            <li><button type="button" name="brake" class="action">Brake<span class="action-hint">−1 speed, no crash risk</span></button></li>
+            <li><button type="button" name="ram" class="action">Ram<span class="action-hint">−20 HP to opponent ahead</span></button></li>
+            <li><button type="button" name="nitro" class="action">Nitro<span class="action-hint">+10 m boost</span></button></li>
         </ul>
     </aside>
 </div>
 
+<div id="toast"></div>
 
+<div id="end-screen">
+    <div>
+        <h2 id="end-title"></h2>
+        <a href="/">Back to lobby</a>
+    </div>
+</div>
+
+{{ game.danger_fields|json_script:"danger-data" }}
 
 <script>
 const gameData = document.getElementById('game-data');
 const gameId = parseInt(gameData.dataset.gameId, 10);
 const playerId = parseInt(gameData.dataset.playerId, 10);
+const trackLength = parseInt(gameData.dataset.trackLength, 10) || 100;
+const MAX_HP = 100;
+const MAX_NITRO = 3;
+
+const trackMarkers = document.getElementById('track-markers');
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const websocket = new WebSocket(wsProtocol + '//' + window.location.host + '/ws/game/' + gameId + '/');
-const trackMarkers = document.getElementById('track-markers');
-const trackLength = 100;
 
-websocket.onopen = function() {
-    console.log('WebSocket connected');
-};
+// ---------- WebSocket ----------
 
 websocket.onmessage = function(event) {
     const data = JSON.parse(event.data);
-    console.log('Game state:', data);
-    
-    // Update UI with new state
+    if (data.error) {
+        showToast(data.error, true);
+        return;
+    }
     updateGameState(data);
 };
 
-websocket.onerror = function(error) {
-    console.error('WebSocket error:', error);
+websocket.onclose = function() {
+    showToast('Connection lost – reload to rejoin', true);
 };
 
 function sendAction(action) {
-    websocket.send(JSON.stringify({
-        'action': action
-    }));
+    websocket.send(JSON.stringify({ action: action }));
 }
 
+// ---------- State updates ----------
+
 function updateGameState(state) {
-    // Update player stats
     state.players.forEach(p => {
         const stats = document.querySelector(`.player-stats[data-player-id="${p.id}"]`);
-        if (!stats) {
-            return;
-        }
+        if (!stats) return;
         stats.querySelector('.hp').textContent = p.hp;
         stats.querySelector('.position').textContent = p.position;
         stats.querySelector('.speed').textContent = p.speed;
         stats.querySelector('.nitro').textContent = p.nitro;
+        renderStatVisuals(stats);
     });
-    
-    // Update turn indicator
+
     const isMyTurn = state.current_turn === playerId;
-    document.getElementById('turn-status').textContent = isMyTurn ? "It's your Turn" : "Wait for your turn";
-    
-    // Disable buttons if not your turn
+    const turnStatus = document.getElementById('turn-status');
+    turnStatus.textContent = isMyTurn ? 'YOUR TURN!' : 'WAITING FOR OPPONENT…';
+    turnStatus.classList.toggle('my-turn', isMyTurn);
+
     document.querySelectorAll('.action').forEach(btn => {
         btn.disabled = !isMyTurn;
     });
+    document.querySelector('button[name="ram"]').disabled = !isMyTurn || !state.can_ram;
 
-    // Update ram button disabled state based on can_ram
-    const ramBtn = document.querySelector('button[name="ram"]');
-    ramBtn.disabled = !isMyTurn || !state.can_ram;
+    const me = state.players.find(p => p.id === playerId);
+    document.querySelector('button[name="nitro"]').disabled = !isMyTurn || !me || me.nitro <= 0;
 
     updateTrack(state.players);
-    
-    // Check if game ended
-    if (state.game_ended) {
-        alert(state.winner_id === playerId ? 'You won!' : 'You lost!');
-        window.location.href = '/';  // Redirect to game lobby
+
+    if (state.timeout) {
+        showToast('Turn timed out – next player!');
     }
 
-    if (state.crashed && isMyTurn === false) {
-    alert('Your car crashed! Lost 40 HP!')
+    if (state.crashed) {
+        // The turn has already passed on, so the player who crashed is the one who is now waiting.
+        showToast(isMyTurn ? 'Opponent crashed! −40 HP' : 'You crashed! −40 HP', !isMyTurn);
+    }
+
+    if (state.game_ended) {
+        const won = state.winner_id === playerId;
+        const endScreen = document.getElementById('end-screen');
+        document.getElementById('end-title').textContent = won ? 'YOU WIN!' : 'YOU LOSE';
+        endScreen.className = 'show ' + (won ? 'win' : 'lose');
     }
 }
 
-function updateTrack(players) {
-    if (!trackMarkers) {
-        return;
-    }
+function renderStatVisuals(stats) {
+    const hp = parseInt(stats.querySelector('.hp').textContent, 10);
+    const fill = stats.querySelector('.hp-fill');
+    const pct = Math.max(0, Math.min(hp, MAX_HP)) / MAX_HP * 100;
+    fill.style.width = pct + '%';
+    fill.classList.toggle('mid', pct <= 60 && pct > 30);
+    fill.classList.toggle('low', pct <= 30);
 
+    const nitro = parseInt(stats.querySelector('.nitro').textContent, 10);
+    stats.querySelector('.nitro-pips').innerHTML =
+        Array.from({ length: MAX_NITRO }, (_, i) => `<i class="${i < nitro ? 'on' : ''}"></i>`).join('');
+}
+
+function trackPercent(position) {
+    return Math.max(0, Math.min(position, trackLength)) / trackLength * 100;
+}
+
+function updateTrack(players) {
     trackMarkers.innerHTML = '';
     players.forEach((p, index) => {
         const marker = document.createElement('div');
         marker.className = p.id === playerId ? 'marker me' : 'marker';
-        const clampedPos = Math.max(0, Math.min(p.position, trackLength));
-        marker.style.left = `${(clampedPos / trackLength) * 100}%`;
-        marker.style.top = `${index * 22}px`;
+        marker.style.left = trackPercent(p.position) + '%';
+        marker.style.top = index === 0 ? '28%' : '72%';
         marker.title = p.user__username || `Player ${p.id}`;
         trackMarkers.appendChild(marker);
     });
 }
 
-// Button click handlers
-document.querySelectorAll('.action').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const action = this.name;
-        sendAction(action);
+function drawDangerZones() {
+    const dangerFields = JSON.parse(document.getElementById('danger-data').textContent);
+    dangerFields.forEach(pos => {
+        const zone = document.createElement('div');
+        zone.className = 'danger-zone';
+        zone.style.left = `calc((100% - 36px) * ${trackPercent(pos) / 100})`;
+        zone.title = `Danger zone at ${pos} m`;
+        document.getElementById('track').appendChild(zone);
     });
+}
+
+// ---------- Toast ----------
+
+let toastTimer;
+function showToast(message, bad = false) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'show' + (bad ? ' bad' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ---------- Init ----------
+
+document.querySelectorAll('.player-stats').forEach(renderStatVisuals);
+drawDangerZones();
+
+document.querySelectorAll('.action').forEach(btn => {
+    btn.addEventListener('click', () => sendAction(btn.name));
 });
-
-
 </script>
 
 {% endblock %}
