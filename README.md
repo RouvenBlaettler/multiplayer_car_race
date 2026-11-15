@@ -3,10 +3,13 @@
 
 Turn-based, two-player racing game built with Django and Channels. Each player chooses an action each turn, manages speed and risk, and races to the finish while trying to outplay the opponent.
 
+![Gameplay](docs/gameplay.gif)
+
 ## Highlights
 
 - Real-time multiplayer with WebSockets (Django Channels)
 - Turn-based game loop and state synchronization
+- Turn timeout (20 s) and a 30 s reconnect grace period for dropped players
 - Action system: accelerate, brake, nitro, ram
 - Crash risk system with per-game danger zones
 - Dynamic UI updates for player stats and actions
@@ -33,6 +36,12 @@ Example commands:
 If you are using a virtual environment, activate it before installing dependencies. The project uses SQLite for local development, so no separate database server is required.
 
 Open the app in your browser and create/join a game.
+
+## Tests
+
+Unit tests cover the game actions, crash logic and turn handling (randomness is mocked for deterministic results):
+
+		python manage.py test game
 
 ## Gameplay Summary
 
